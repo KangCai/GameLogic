@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>序列帧动画制作工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="progress-indicator" id="progressIndicator">
+        <div class="progress-steps">
+            <div class="progress-step" data-step="upload">
+                <div class="step-circle">1</div>
+                <div class="step-label">上传视频</div>
+            </div>
+            <div class="progress-step" data-step="extract">
+                <div class="step-circle">2</div>
+                <div class="step-label">提取帧</div>
+            </div>
+            <div class="progress-step" data-step="select">
+                <div class="step-circle">3</div>
+                <div class="step-label">选择帧</div>
+            </div>
+            <div class="progress-step" data-step="process">
+                <div class="step-circle">4</div>
+                <div class="step-label">抠图处理</div>
+            </div>
+            <div class="progress-step" data-step="spritesheet">
+                <div class="step-circle">5</div>
+                <div class="step-label">生成Spritesheet</div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <header class="header">
+            <h1>序列帧动画制作工具</h1>
+            <p class="subtitle">从视频提取帧，制作序列帧动画和Spritesheet</p>
+            <div class="studio-meta">
+                <div class="studio-brand">
+                    <img src="icon.png" alt="游逻辑工作室 logo" class="studio-logo">
+                    <span class="studio-tagline">游逻辑工作室</span>
+                </div>
+                <div class="studio-social">
+                    <span class="social-label">❤️求个关注：</span>
+                    <a class="social-link" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
+                        <span class="social-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 4h20v12H7l-5 4V4z"></path>
+                            </svg>
+                        </span>
+                        <span>Bilibili</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="videoInput" accept="video/*" hidden>
+                <div class="upload-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="upload-text">点击或拖拽视频文件到此处</p>
+                    <p class="upload-hint">支持 MP4, WebM, MOV 等格式</p>
+                </div>
+            </div>
+            <div class="video-player-wrapper" id="videoPlayerContainer" style="display: none;">
+                <video id="uploadedVideoPlayer" class="uploaded-video" controls></video>
+            </div>
+            <div class="video-info" id="videoInfo" style="display: none;">
+                <div class="info-item">
+                    <span class="info-label">文件名：</span>
+                    <span class="info-value" id="fileName"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">时长：</span>
+                    <span class="info-value" id="videoDuration"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">分辨率：</span>
+                    <span class="info-value" id="videoResolution"></span>
+                </div>
+                <div class="info-item info-action">
+                    <button id="replaceVideoBtn" class="btn btn-secondary btn-sm">替换视频</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section" id="controlSection" style="display: none;">
+            <div class="frame-rate-control">
+                <label for="frameRate">提取帧率（帧/秒）：</label>
+                <input type="number" id="frameRate" min="0.1" max="60" step="0.1" value="10" class="frame-rate-input">
+                <span class="frame-rate-hint">建议 5~20</span>
+                <button id="extractBtn" class="btn btn-primary">提取帧</button>
+            </div>
+        </div>
+
+        <div class="frames-section" id="framesSection" style="display: none;">
+            <div class="frames-header">
+                <h2>提取的帧</h2>
+                <div class="frame-actions">
+                    <button id="selectAllBtn" class="btn btn-secondary btn-sm">全选</button>
+                    <button id="deselectAllBtn" class="btn btn-secondary btn-sm">取消全选</button>
+                </div>
+            </div>
+            <div class="frames-grid" id="framesGrid"></div>
+        </div>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <div class="preview-header">
+                <h2>快速预览选中的帧</h2>
+            </div>
+            <div class="preview-container">
+                <div class="preview-image-wrapper">
+                    <img id="previewImage" src="" alt="预览帧" class="preview-image">
+                    <div class="preview-frame-info">
+                        <span id="previewFrameNumber">帧 0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-controls">
+                <div class="preview-slider-container">
+                    <input type="range" id="previewSlider" min="0" max="0" value="0" class="preview-slider">
+                </div>
+                <div class="preview-buttons">
+                    <button id="firstFrameBtn" class="btn btn-icon" title="第一帧">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="11 17 6 12 11 7"></polyline>
+                            <polyline points="18 17 13 12 18 7"></polyline>
+                        </svg>
+                    </button>
+                    <button id="prevFrameBtn" class="btn btn-icon" title="上一帧">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button id="playPauseBtn" class="btn btn-icon btn-play" title="播放/暂停">
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    </button>
+                    <button id="nextFrameBtn" class="btn btn-icon" title="下一帧">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <button id="lastFrameBtn" class="btn btn-icon" title="最后帧">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="13 17 18 12 13 7"></polyline>
+                            <polyline points="6 17 11 12 6 7"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="preview-settings">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="loopCheckbox" checked>
+                        <span>循环播放</span>
+                    </label>
+                    <div class="speed-control">
+                        <label for="playbackSpeed">播放速度：</label>
+                        <select id="playbackSpeed" class="speed-select">
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>正常速度</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cutout-section" id="cutoutSection" style="display: none;">
+            <div class="cutout-header">
+                <h2>抠图处理</h2>
+            </div>
+            <div class="cutout-controls">
+                <div class="cutout-options">
+                    <div class="cutout-option-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="removeWatermarkCheckbox" checked>
+                            <span>移除水印（四个角）</span>
+                        </label>
+                        <div class="watermark-ratio-control" id="watermarkRatioControl">
+                            <label for="watermarkRatio">水印区域比例：</label>
+                            <input type="number" id="watermarkRatio" min="1" max="50" step="1" value="10" class="watermark-ratio-input">
+                            <span>%</span>
+                        </div>
+                    </div>
+                    <div class="cutout-option-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="removeBackgroundCheckbox" checked>
+                            <span>移除背景</span>
+                        </label>
+                        <div class="background-color-info" id="backgroundColorInfo" style="display: none;">
+                            <span class="bg-color-label">检测到的背景色：</span>
+                            <div class="bg-color-preview" id="bgColorPreview"></div>
+                            <span class="bg-color-code" id="bgColorCode"></span>
+                        </div>
+                    </div>
+                    <div class="cutout-option-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="outputResolutionCheckbox" checked>
+                            <span>输出分辨率</span>
+                        </label>
+                        <div class="output-resolution-control" id="outputResolutionControl">
+                            <select id="presetResolution" class="preset-resolution-select">
+                                <option value="64">64px</option>
+                                <option value="128" selected>128px</option>
+                                <option value="256">256px</option>
+                                <option value="512">512px</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                            <div class="preset-resolution-display" id="presetResolutionDisplay">
+                                <span>×</span>
+                                <span id="presetHeightValue">--</span>
+                            </div>
+                            <div class="custom-resolution-inputs" id="customResolutionInputs" style="display: none;">
+                                <input type="number" id="outputWidth" min="1" step="1" class="resolution-input" placeholder="宽度">
+                                <span>×</span>
+                                <input type="number" id="outputHeight" min="1" step="1" class="resolution-input" placeholder="高度">
+                            </div>
+                            <div class="output-resolution-info" id="outputResolutionInfo" style="display: none;">
+                                <span class="resolution-separator">|</span>
+                                <span class="resolution-text">
+                                    <span class="resolution-label">原始:</span>
+                                    <span class="resolution-value" id="originalResolution">--</span>
+                                </span>
+                                <span class="resolution-text">
+                                    <span class="resolution-label">处理后:</span>
+                                    <span class="resolution-value" id="processedResolution">--</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cutout-actions">
+                    <button id="processCutoutBtn" class="btn btn-primary">处理选中帧</button>
+                    <button id="downloadCutoutBtn" class="btn btn-secondary" style="display: none;">下载帧zip压缩包（png格式）</button>
+                </div>
+            </div>
+            <div class="cutout-preview" id="cutoutPreview" style="display: none;">
+                <h3>处理结果预览</h3>
+                <div class="cutout-preview-grid" id="cutoutPreviewGrid"></div>
+            </div>
+        </div>
+
+        <div class="spritesheet-section" id="spritesheetSection" style="display: none;">
+            <div class="spritesheet-header">
+                <h2>生成Spritesheet</h2>
+            </div>
+            <div class="spritesheet-controls">
+                <div class="spritesheet-actions">
+                    <button id="generateSpritesheetBtn" class="btn btn-primary">生成Spritesheet</button>
+                    <button id="downloadSpritesheetBtn" class="btn btn-secondary" style="display: none;">下载Spritesheet</button>
+                </div>
+            </div>
+            <div class="spritesheet-preview" id="spritesheetPreview" style="display: none;">
+                <h3>Spritesheet预览</h3>
+                <div class="spritesheet-info" id="spritesheetInfo"></div>
+                <div class="spritesheet-preview-container">
+                    <img id="spritesheetPreviewImage" src="" alt="Spritesheet预览" class="spritesheet-preview-img">
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <div class="usage-stats" id="usageStats">
+                <span class="stat-item">今日使用：<span id="todayCount">0</span> 次</span>
+                <span class="stat-separator">|</span>
+                <span class="stat-item">总使用：<span id="totalCount">0</span> 次</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="jszip.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
