@@ -1,0 +1,17 @@
+{
+  "name": "aispritesheetanimation",
+  "version": "1.0.0",
+  "description": "序列帧动画制作工具",
+  "scripts": {
+    "build": "node build.js",
+    "install": "echo 'No dependencies to install'"
+  },
+  "keywords": [
+    "spritesheet",
+    "animation",
+    "video"
+  ],
+  "author": "大话AI组",
+  "license": "MIT"
+}
+

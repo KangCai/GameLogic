@@ -1,6 +1,60 @@
-# AISpriteSheetAnimation
+# 序列帧动画制作工具
 
+从视频提取帧，制作序列帧动画和Spritesheet的在线工具。
 
+## Google Analytics 配置
+
+本项目已集成 Google Analytics 用于统计使用次数。**需要配置 GA 测量 ID 才能生效**。
+
+### 配置步骤
+
+1. **获取 Google Analytics 测量 ID**
+   - 访问 [Google Analytics](https://analytics.google.com/)
+   - 创建账号和属性（如果还没有）
+   - 获取测量 ID（格式：`G-XXXXXXXXXX`）
+
+2. **替换配置**
+   - 打开 `index.html`
+   - 找到两处 `GA_MEASUREMENT_ID`，替换为你的实际测量 ID
+   - 例如：`gtag('config', 'G-XXXXXXXXXX');`
+
+3. **验证**
+   - 部署后访问页面
+   - 在 Google Analytics 后台查看实时数据
+   - 使用工具时会发送事件：`extract_frames`、`process_cutout`、`generate_spritesheet`
+
+### 统计说明
+
+- **前端显示**：仍使用 localStorage 显示个人使用统计（仅当前浏览器）
+- **服务器统计**：通过 Google Analytics 记录所有用户的使用情况
+- **事件类型**：
+  - `extract_frames` - 提取帧操作
+  - `process_cutout` - 抠图处理操作
+  - `generate_spritesheet` - 生成 Spritesheet 操作
+
+## 部署说明
+
+### 构建项目
+
+```bash
+npm install
+npm run build
+```
+
+构建完成后，所有文件会输出到 `dist` 目录。
+
+### 部署配置
+
+根据部署平台要求，配置如下：
+
+- **项目预设框架**: React（虽然本项目是纯静态项目，但构建流程兼容）
+- **Node.js 版本**: Node.js 18
+- **目标目录**: 默认为根目录（留空）
+- **安装命令**: `npm install`
+- **构建命令**: `npm run build`
+- **部署命令**: `tcb hosting deploy ./dist /Video2Spritesheet`
+
+> 注意：`./dist` 是构建输出目录，`/Video2Spritesheet` 是应用部署目录。多应用部署到根目录可能存在文件覆盖情况，建议区分应用目录部署。
 
 ## Getting started
 

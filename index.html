@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>序列帧动画制作工具</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
 </head>
 <body>
     <div class="progress-indicator" id="progressIndicator">
@@ -42,7 +51,7 @@
                 </div>
                 <div class="studio-social">
                     <span class="social-label">❤️求个关注：</span>
-                    <a class="social-link" href="https://www.google.com" target="_blank" rel="noopener noreferrer">
+                    <a class="social-link" id="bilibiliLink" href="https://space.bilibili.com/2378399" target="_blank" rel="noopener noreferrer">
                         <span class="social-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M2 4h20v12H7l-5 4V4z"></path>

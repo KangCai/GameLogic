@@ -119,7 +119,7 @@ function saveUsageStats(stats) {
     localStorage.setItem('usageStats', JSON.stringify(stats));
 }
 
-function updateUsageStats() {
+function updateUsageStats(action = 'usage') {
     const stats = getUsageStats();
     const today = getTodayDate();
     
@@ -135,6 +135,15 @@ function updateUsageStats() {
     
     saveUsageStats(stats);
     displayUsageStats();
+    
+    // 发送事件到 Google Analytics
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'tool_usage', {
+            'event_category': 'spritesheet_tool',
+            'event_label': action,
+            'value': 1
+        });
+    }
 }
 
 function displayUsageStats() {
@@ -158,6 +167,36 @@ initProgressIndicator();
 
 // 初始化事件监听
 initEventListeners();
+
+// Bilibili 链接随机抖动效果
+function initBilibiliShake() {
+    const bilibiliLink = document.getElementById('bilibiliLink');
+    if (!bilibiliLink) return;
+    
+    function triggerShake() {
+        bilibiliLink.classList.add('shake');
+        setTimeout(() => {
+            bilibiliLink.classList.remove('shake');
+        }, 500); // 动画持续时间
+    }
+    
+    function scheduleNextShake() {
+        // 随机 3-5 秒
+        const delay = Math.random() * 2000 + 3000; // 3000-5000ms
+        setTimeout(() => {
+            triggerShake();
+            scheduleNextShake(); // 递归调用，持续执行
+        }, delay);
+    }
+    
+    // 页面加载后延迟一下再开始第一次抖动
+    setTimeout(() => {
+        scheduleNextShake();
+    }, 2000);
+}
+
+// 初始化 Bilibili 抖动效果
+initBilibiliShake();
 
 function initEventListeners() {
     // 上传区域点击
@@ -619,7 +658,7 @@ async function extractFrames() {
         updateProgress(1);
         
         // 更新使用统计
-        updateUsageStats();
+        updateUsageStats('extract_frames');
         
     } catch (error) {
         console.error('提取帧时出错:', error);
@@ -980,7 +1019,7 @@ async function processCutout() {
         updateProgress(3);
         
         // 更新使用统计
-        updateUsageStats();
+        updateUsageStats('process_cutout');
         
         // 处理完成后显示Spritesheet模块
         if (processedFrames.length > 0) {
@@ -1062,49 +1101,6 @@ function processFrame(frame, removeWatermark, watermarkRatio, removeBg, outputRe
         };
         img.src = frame.image;
     });
-}
-
-// 查找像素区域边界
-function findPixelBounds(ctx, width, height) {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let hasPixel = false;
-    
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
-            if (data[idx + 3] > 0) { // 非透明像素
-                hasPixel = true;
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
-            }
-        }
-    }
-    
-    if (!hasPixel) {
-        return null;
-    }
-    
-    return {
-        x: minX,
-        y: minY,
-        width: maxX - minX + 1,
-        height: maxY - minY + 1
-    };
-}
-
-// 绘制像素区域边界框（黑色虚线）
-function drawPixelBoundsBox(ctx, bounds) {
-    ctx.save();
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 8; // 4倍粗（原来是2px，现在是8px）
-    ctx.setLineDash([5, 5]); // 虚线样式
-    ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
-    ctx.restore();
 }
 
 // 移除水印（移除四个角的长方形区域）
@@ -1303,108 +1299,6 @@ function rgbToHex(r, g, b) {
     }).join('');
 }
 
-// 计算所有帧的像素区域并集
-function calculateUnionBounds(frames, removeBg) {
-    return new Promise((resolve) => {
-        if (frames.length === 0) {
-            resolve(null);
-            return;
-        }
-        
-        const bounds = {
-            minX: Infinity,
-            minY: Infinity,
-            maxX: -Infinity,
-            maxY: -Infinity
-        };
-        
-        let processed = 0;
-        let firstImgWidth = 0;
-        let firstImgHeight = 0;
-        
-        frames.forEach((frame, index) => {
-            const img = new Image();
-            img.onload = () => {
-                if (index === 0) {
-                    firstImgWidth = img.width;
-                    firstImgHeight = img.height;
-                }
-                
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                // 如果需要移除背景，先处理
-                if (removeBg) {
-                    removeBackgroundFromCanvas(ctx, canvas.width, canvas.height);
-                }
-                
-                // 获取图像数据
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-                
-                // 找到非透明像素的边界
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                let hasPixel = false;
-                
-                for (let y = 0; y < canvas.height; y++) {
-                    for (let x = 0; x < canvas.width; x++) {
-                        const idx = (y * canvas.width + x) * 4;
-                        if (data[idx + 3] > 0) { // 非透明像素
-                            hasPixel = true;
-                            minX = Math.min(minX, x);
-                            minY = Math.min(minY, y);
-                            maxX = Math.max(maxX, x);
-                            maxY = Math.max(maxY, y);
-                        }
-                    }
-                }
-                
-                if (hasPixel) {
-                    bounds.minX = Math.min(bounds.minX, minX);
-                    bounds.minY = Math.min(bounds.minY, minY);
-                    bounds.maxX = Math.max(bounds.maxX, maxX);
-                    bounds.maxY = Math.max(bounds.maxY, maxY);
-                }
-                
-                processed++;
-                if (processed === frames.length) {
-                    // 如果没有任何像素，使用第一张图片的尺寸
-                    if (bounds.minX === Infinity) {
-                        resolve({
-                            x: 0,
-                            y: 0,
-                            width: firstImgWidth,
-                            height: firstImgHeight
-                        });
-                    } else {
-                        resolve({
-                            x: bounds.minX,
-                            y: bounds.minY,
-                            width: bounds.maxX - bounds.minX + 1,
-                            height: bounds.maxY - bounds.minY + 1
-                        });
-                    }
-                }
-            };
-            img.onerror = () => {
-                processed++;
-                if (processed === frames.length) {
-                    resolve({
-                        x: 0,
-                        y: 0,
-                        width: firstImgWidth || 100,
-                        height: firstImgHeight || 100
-                    });
-                }
-            };
-            img.src = frame.image;
-        });
-    });
-}
-
 // 添加单个抠图预览项
 function addCutoutPreviewItem(frame, index) {
     const frameItem = document.createElement('div');
@@ -1415,17 +1309,6 @@ function addCutoutPreviewItem(frame, index) {
         <div class="cutout-preview-label">帧 ${frame.index + 1}</div>
     `;
     cutoutPreviewGrid.appendChild(frameItem);
-}
-
-// 显示抠图预览
-function displayCutoutPreview() {
-    cutoutPreviewGrid.innerHTML = '';
-    
-    processedFrames.forEach((frame, index) => {
-        addCutoutPreviewItem(frame, index);
-    });
-    
-    cutoutPreview.style.display = 'block';
 }
 
 // 下载处理后的帧
@@ -1596,7 +1479,7 @@ async function generateSpritesheet() {
         updateProgress(4);
         
         // 更新使用统计
-        updateUsageStats();
+        updateUsageStats('generate_spritesheet');
         
     } catch (error) {
         console.error('生成Spritesheet时出错:', error);

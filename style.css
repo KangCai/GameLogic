@@ -33,11 +33,22 @@ body {
     gap: 30px;
 }
 
+@media (max-width: 1200px) {
+    .container {
+        margin-left: 170px; /* 保持左边距 */
+        max-width: calc(100% - 170px); /* 确保容器不会超出视口 */
+    }
+}
+
 @media (max-width: 1024px) {
     body {
         flex-direction: column;
         gap: 20px;
         padding-left: 20px;
+    }
+    
+    .container {
+        margin-left: 0; /* 移除左边距，因为进度指示器已变为相对定位 */
     }
     
     .progress-indicator {
@@ -210,14 +221,12 @@ body {
     font-weight: 600;
 }
 
-.progress-line {
-    display: none; /* 不再需要单独的进度条，使用步骤之间的连接线 */
-}
-
 .container {
     max-width: 1400px;
     margin: 0 auto;
     flex: 1;
+    margin-left: 170px; /* 为左侧固定进度指示器留出空间 (120px + 20px + 30px gap) */
+    transition: margin-left 0.3s ease;
 }
 
 .header {
@@ -307,6 +316,24 @@ body {
 .social-icon svg {
     width: 18px;
     height: 18px;
+}
+
+/* Bilibili 抖动动画 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-2px) rotate(-1deg); }
+    20% { transform: translateX(2px) rotate(1deg); }
+    30% { transform: translateX(-2px) rotate(-1deg); }
+    40% { transform: translateX(2px) rotate(1deg); }
+    50% { transform: translateX(-1px) rotate(-0.5deg); }
+    60% { transform: translateX(1px) rotate(0.5deg); }
+    70% { transform: translateX(-1px) rotate(-0.5deg); }
+    80% { transform: translateX(1px) rotate(0.5deg); }
+    90% { transform: translateX(0); }
+}
+
+#bilibiliLink.shake {
+    animation: shake 0.5s ease-in-out;
 }
 
 .header h1 {
@@ -1008,79 +1035,6 @@ body {
     gap: 20px;
 }
 
-.spritesheet-options {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.spritesheet-option-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.spritesheet-settings {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.spritesheet-layout {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.spritesheet-layout label {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.spritesheet-select {
-    padding: 6px 10px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
-    font-size: 0.9rem;
-    cursor: pointer;
-    background: white;
-    transition: border-color 0.3s ease;
-}
-
-.spritesheet-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-.spritesheet-spacing {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.spritesheet-spacing label {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.spritesheet-input {
-    padding: 6px 10px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
-    font-size: 0.9rem;
-    width: 80px;
-    transition: border-color 0.3s ease;
-}
-
-.spritesheet-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
 .spritesheet-actions {
     display: flex;
     gap: 15px;
@@ -1146,39 +1100,6 @@ body {
     max-height: 600px;
     display: block;
     object-fit: contain;
-}
-
-.advanced-options {
-    margin-top: 10px;
-}
-
-.advanced-toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    transition: all 0.3s ease;
-}
-
-.advanced-toggle-btn:hover {
-    background: var(--border-color);
-}
-
-.toggle-icon {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.3s ease;
-}
-
-.advanced-options-content {
-    margin-top: 10px;
-    padding-left: 20px;
 }
 
 .watermark-ratio-control label {
@@ -1250,19 +1171,6 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     background: white;
-}
-
-.cutout-resolution-info {
-    padding: 4px 8px;
-    background: #f3f4f6;
-    border-top: 1px solid var(--border-color);
-    font-size: 0.75rem;
-}
-
-.resolution-item {
-    display: flex;
-    justify-content: space-between;
-    margin: 2px 0;
 }
 
 .resolution-label {
