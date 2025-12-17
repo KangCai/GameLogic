@@ -103,64 +103,40 @@ function getTodayDate() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-function getUsageStats() {
-    const stats = localStorage.getItem('usageStats');
-    if (stats) {
-        return JSON.parse(stats);
-    }
-    return {
-        total: 0,
-        lastDate: '',
-        today: 0
-    };
-}
-
-function saveUsageStats(stats) {
-    localStorage.setItem('usageStats', JSON.stringify(stats));
-}
-
-function updateUsageStats(action = 'usage') {
-    const stats = getUsageStats();
+// 更新使用统计（功能使用计数，不包括页面访问）
+async function updateUsageStats(action = 'usage') {
     const today = getTodayDate();
     
-    // 如果是新的一天，重置今日计数
-    if (stats.lastDate !== today) {
-        stats.today = 0;
-        stats.lastDate = today;
+    // 只使用 Firebase（如果已配置）
+    if (window.firebaseDatabase && window.firebaseRef && window.firebaseSet && window.firebaseGet) {
+        try {
+            const todayRef = window.firebaseRef(window.firebaseDatabase, `stats/daily/${today}`);
+            const totalRef = window.firebaseRef(window.firebaseDatabase, 'stats/total');
+            
+            // 增加今日计数
+            const todaySnapshot = await window.firebaseGet(todayRef);
+            const currentToday = todaySnapshot.exists() ? todaySnapshot.val() : 0;
+            await window.firebaseSet(todayRef, currentToday + 1);
+            
+            // 增加总计数
+            const totalSnapshot = await window.firebaseGet(totalRef);
+            const currentTotal = totalSnapshot.exists() ? totalSnapshot.val() : 0;
+            await window.firebaseSet(totalRef, currentTotal + 1);
+            
+            // 发送事件到 Google Analytics（保留用于其他分析）
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'tool_usage', {
+                    'event_category': 'spritesheet_tool',
+                    'event_label': action,
+                    'value': 1
+                });
+            }
+        } catch (error) {
+            console.error('Firebase 更新失败:', error);
+        }
     }
-    
-    // 增加计数
-    stats.today++;
-    stats.total++;
-    
-    saveUsageStats(stats);
-    displayUsageStats();
-    
-    // 发送事件到 Google Analytics
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'tool_usage', {
-            'event_category': 'spritesheet_tool',
-            'event_label': action,
-            'value': 1
-        });
-    }
+    // 如果 Firebase 不可用，不执行任何操作（不显示数据）
 }
-
-function displayUsageStats() {
-    const stats = getUsageStats();
-    const today = getTodayDate();
-    
-    // 如果是新的一天，重置今日计数显示
-    if (stats.lastDate !== today) {
-        stats.today = 0;
-    }
-    
-    todayCount.textContent = stats.today || 0;
-    totalCount.textContent = stats.total || 0;
-}
-
-// 初始化时显示统计
-displayUsageStats();
 
 // 初始化进度指示器
 initProgressIndicator();

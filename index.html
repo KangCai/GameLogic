@@ -7,15 +7,210 @@
     <link rel="stylesheet" href="style.css">
     
     <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HHMQ09PZQJ"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-HHMQ09PZQJ');
+        (function() {
+            const gaStartTime = performance.now();
+            const gaScript = document.createElement('script');
+            gaScript.async = true;
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-HHMQ09PZQJ';
+            gaScript.onload = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.log(`📊 Google Analytics 加载时间: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            gaScript.onerror = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.error(`❌ Google Analytics 加载失败，耗时: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            document.head.appendChild(gaScript);
+            
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HHMQ09PZQJ');
+        })();
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        (async function() {
+            const firebaseStartTime = performance.now();
+            
+            try {
+                // 加载 Firebase App 模块
+                const firebaseAppStartTime = performance.now();
+                const appModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const firebaseAppLoadTime = performance.now() - firebaseAppStartTime;
+                console.log(`🔥 Firebase App 模块加载时间: ${firebaseAppLoadTime.toFixed(2)}ms`);
+                
+                // 加载 Firebase Database 模块
+                const firebaseDbStartTime = performance.now();
+                const dbModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+                const firebaseDbLoadTime = performance.now() - firebaseDbStartTime;
+                const firebaseTotalTime = performance.now() - firebaseStartTime;
+                console.log(`🔥 Firebase Database 模块加载时间: ${firebaseDbLoadTime.toFixed(2)}ms`);
+                console.log(`🔥 Firebase 总加载时间: ${firebaseTotalTime.toFixed(2)}ms`);
+                
+                // 导入 Firebase 函数
+                const { initializeApp } = appModule;
+                const { getDatabase, ref, set, get, onValue, increment, serverTimestamp } = dbModule;
+                
+                // Firebase 配置
+                const firebaseConfig = {
+                    apiKey: "AIzaSyALomh38paxBLYGWPdwrW3aEre7VrAdf9M",
+                    authDomain: "gamelogic-sin.firebaseapp.com",
+                    databaseURL: "https://gamelogic-sin-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "gamelogic-sin",
+                    storageBucket: "gamelogic-sin.firebasestorage.app",
+                    messagingSenderId: "236531765720",
+                    appId: "1:236531765720:web:9c7d8fe1c8f6d1723be2ad",
+                    measurementId: "G-YQFPYHJTRM"
+                };
+                
+                // 实时统计功能
+                (function() {
+                    let database = null;
+                    let isFirebaseEnabled = false;
+                    
+                    function getTodayDate() {
+                        const now = new Date();
+                        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    }
+                    
+                    // 初始化 Firebase
+                    function initFirebase() {
+                        try {
+                            const app = initializeApp(firebaseConfig);
+                            database = getDatabase(app);
+                            isFirebaseEnabled = true;
+                            
+                            // 暴露到全局，供 script.js 使用
+                            window.firebaseDatabase = database;
+                            window.firebaseRef = ref;
+                            window.firebaseSet = set;
+                            window.firebaseGet = get;
+                            window.firebaseOnValue = onValue;
+                            window.firebaseIncrement = increment;
+                            
+                            console.log('Firebase 初始化成功');
+                            return true;
+                        } catch (error) {
+                            console.error('Firebase 初始化失败:', error);
+                            return false;
+                        }
+                    }
+                    
+                    // 使用 Firebase 更新统计
+                    async function updateStatsWithFirebase() {
+                        if (!database || !isFirebaseEnabled) return false;
+                        
+                        const dataRequestStartTime = performance.now();
+                        const today = getTodayDate();
+                        const todayRef = ref(database, `stats/daily/${today}`);
+                        const totalRef = ref(database, 'stats/total');
+                        
+                        try {
+                            // 获取今日使用次数
+                            const getTodayStartTime = performance.now();
+                            const todaySnapshot = await get(todayRef);
+                            const getTodayTime = performance.now() - getTodayStartTime;
+                            const currentToday = todaySnapshot.exists() ? todaySnapshot.val() : 0;
+                            console.log(`📊 获取今日使用次数请求时间: ${getTodayTime.toFixed(2)}ms (值: ${currentToday})`);
+                            
+                            // 更新今日使用次数
+                            const setTodayStartTime = performance.now();
+                            await set(todayRef, currentToday + 1);
+                            const setTodayTime = performance.now() - setTodayStartTime;
+                            console.log(`📊 更新今日使用次数请求时间: ${setTodayTime.toFixed(2)}ms`);
+                            
+                            // 获取总使用次数
+                            const getTotalStartTime = performance.now();
+                            const totalSnapshot = await get(totalRef);
+                            const getTotalTime = performance.now() - getTotalStartTime;
+                            const currentTotal = totalSnapshot.exists() ? totalSnapshot.val() : 0;
+                            console.log(`📊 获取总使用次数请求时间: ${getTotalTime.toFixed(2)}ms (值: ${currentTotal})`);
+                            
+                            // 更新总使用次数
+                            const setTotalStartTime = performance.now();
+                            await set(totalRef, currentTotal + 1);
+                            const setTotalTime = performance.now() - setTotalStartTime;
+                            console.log(`📊 更新总使用次数请求时间: ${setTotalTime.toFixed(2)}ms`);
+                            
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.log(`📊 Firebase 数据请求总耗时: ${dataRequestTotalTime.toFixed(2)}ms`);
+                            
+                            // 监听实时更新
+                            let statsShown = false;
+                            
+                            onValue(todayRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const todayCountEl = document.getElementById('todayCount');
+                                if (todayCountEl) {
+                                    todayCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            onValue(totalRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const totalCountEl = document.getElementById('totalCount');
+                                if (totalCountEl) {
+                                    totalCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            return true;
+                        } catch (error) {
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.error(`❌ 更新 Firebase 统计数据失败，耗时: ${dataRequestTotalTime.toFixed(2)}ms`, error);
+                            return false;
+                        }
+                    }
+                    
+                    // 主函数：更新统计
+                    async function updatePageViewStats() {
+                        // 尝试初始化 Firebase
+                        const firebaseInitialized = initFirebase();
+                        
+                        if (firebaseInitialized) {
+                            // 使用 Firebase
+                            await updateStatsWithFirebase();
+                        }
+                        // 如果 Firebase 初始化失败，不显示任何数据（保持为空）
+                    }
+                    
+                    // 页面加载时立即执行
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updatePageViewStats);
+                    } else {
+                        updatePageViewStats();
+                    }
+                })();
+            } catch (error) {
+                const firebaseLoadTime = performance.now() - firebaseStartTime;
+                console.error(`❌ Firebase 加载失败，耗时: ${firebaseLoadTime.toFixed(2)}ms`, error);
+            }
+        })();
     </script>
 </head>
 <body>
+    <!-- 进度指示器 -->
     <div class="progress-indicator" id="progressIndicator">
         <div class="progress-steps">
             <div class="progress-step" data-step="upload">
@@ -40,7 +235,10 @@
             </div>
         </div>
     </div>
+
+    <!-- 主容器 -->
     <div class="container">
+        <!-- 页头 -->
         <header class="header">
             <h1>序列帧动画制作工具</h1>
             <p class="subtitle">从视频提取帧，制作序列帧动画和Spritesheet</p>
@@ -63,7 +261,8 @@
             </div>
         </header>
 
-        <div class="upload-section">
+        <!-- 上传区域 -->
+        <section class="upload-section">
             <div class="upload-area" id="uploadArea">
                 <input type="file" id="videoInput" accept="video/*" hidden>
                 <div class="upload-content">
@@ -96,18 +295,20 @@
                     <button id="replaceVideoBtn" class="btn btn-secondary btn-sm">替换视频</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="control-section" id="controlSection" style="display: none;">
+        <!-- 控制区域 -->
+        <section class="control-section" id="controlSection" style="display: none;">
             <div class="frame-rate-control">
                 <label for="frameRate">提取帧率（帧/秒）：</label>
                 <input type="number" id="frameRate" min="0.1" max="60" step="0.1" value="10" class="frame-rate-input">
                 <span class="frame-rate-hint">建议 5~20</span>
                 <button id="extractBtn" class="btn btn-primary">提取帧</button>
             </div>
-        </div>
+        </section>
 
-        <div class="frames-section" id="framesSection" style="display: none;">
+        <!-- 帧列表区域 -->
+        <section class="frames-section" id="framesSection" style="display: none;">
             <div class="frames-header">
                 <h2>提取的帧</h2>
                 <div class="frame-actions">
@@ -116,9 +317,10 @@
                 </div>
             </div>
             <div class="frames-grid" id="framesGrid"></div>
-        </div>
+        </section>
 
-        <div class="preview-section" id="previewSection" style="display: none;">
+        <!-- 预览区域 -->
+        <section class="preview-section" id="previewSection" style="display: none;">
             <div class="preview-header">
                 <h2>快速预览选中的帧</h2>
             </div>
@@ -182,9 +384,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="cutout-section" id="cutoutSection" style="display: none;">
+        <!-- 抠图处理区域 -->
+        <section class="cutout-section" id="cutoutSection" style="display: none;">
             <div class="cutout-header">
                 <h2>抠图处理</h2>
             </div>
@@ -257,9 +460,10 @@
                 <h3>处理结果预览</h3>
                 <div class="cutout-preview-grid" id="cutoutPreviewGrid"></div>
             </div>
-        </div>
+        </section>
 
-        <div class="spritesheet-section" id="spritesheetSection" style="display: none;">
+        <!-- Spritesheet 生成区域 -->
+        <section class="spritesheet-section" id="spritesheetSection" style="display: none;">
             <div class="spritesheet-header">
                 <h2>生成Spritesheet</h2>
             </div>
@@ -276,10 +480,11 @@
                     <img id="spritesheetPreviewImage" src="" alt="Spritesheet预览" class="spritesheet-preview-img">
                 </div>
             </div>
-        </div>
+        </section>
         
+        <!-- 页脚 -->
         <footer class="footer">
-            <div class="usage-stats" id="usageStats">
+            <div class="usage-stats" id="usageStats" style="display: none;">
                 <span class="stat-item">今日使用：<span id="todayCount">0</span> 次</span>
                 <span class="stat-separator">|</span>
                 <span class="stat-item">总使用：<span id="totalCount">0</span> 次</span>
@@ -287,8 +492,8 @@
         </footer>
     </div>
 
+    <!-- 外部脚本 -->
     <script src="jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-

@@ -4,6 +4,9 @@ node_modules/
 # 构建输出
 dist/
 
+# 统计数据文件
+stats.json
+
 # 系统文件
 .DS_Store
 Thumbs.db

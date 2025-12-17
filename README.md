@@ -1,146 +1,242 @@
 # 序列帧动画制作工具
 
-从视频提取帧，制作序列帧动画和Spritesheet的在线工具。
+一个基于 Web 的在线工具，用于从视频提取帧、进行抠图处理并生成 Spritesheet 序列帧动画。
 
-## Google Analytics 配置
+## ✨ 核心功能
 
-本项目已集成 Google Analytics 用于统计使用次数。**需要配置 GA 测量 ID 才能生效**。
+### 1. 视频帧提取
+- 支持 MP4、WebM、MOV 等常见视频格式
+- 可自定义提取帧率（建议 5~20 帧/秒）
+- 实时预览提取的帧
+- 支持拖拽上传和点击上传
 
-### 配置步骤
+### 2. 帧选择与预览
+- 网格视图展示所有提取的帧
+- 支持单选、全选、取消全选
+- 实时预览选中的帧序列
+- 支持播放/暂停、循环播放
+- 可调节播放速度（0.5x、1x、2x）
 
-1. **获取 Google Analytics 测量 ID**
-   - 访问 [Google Analytics](https://analytics.google.com/)
-   - 创建账号和属性（如果还没有）
-   - 获取测量 ID（格式：`G-XXXXXXXXXX`）
+### 3. 智能抠图处理
+- **移除水印**：自动移除四个角的水印区域（可自定义区域比例）
+- **移除背景**：智能检测并移除背景色（基于边缘轮廓颜色分析）
+- **分辨率调整**：支持预设分辨率（64px、128px、256px、512px）或自定义分辨率
+- 实时预览处理结果
 
-2. **替换配置**
-   - 打开 `index.html`
-   - 找到两处 `GA_MEASUREMENT_ID`，替换为你的实际测量 ID
-   - 例如：`gtag('config', 'G-XXXXXXXXXX');`
+### 4. Spritesheet 生成
+- 自动计算最优行列布局（接近正方形）
+- 生成 PNG 格式的 Spritesheet
+- 显示详细的尺寸和布局信息
+- 支持一键下载
 
-3. **验证**
-   - 部署后访问页面
-   - 在 Google Analytics 后台查看实时数据
-   - 使用工具时会发送事件：`extract_frames`、`process_cutout`、`generate_spritesheet`
+### 5. 实时统计
+- 使用 Firebase Realtime Database 实现跨设备、跨用户的实时统计
+- 显示今日使用次数和总使用次数
+- 自动回退到 localStorage（如果 Firebase 未配置）
 
-### 统计说明
+## 🏗️ 项目结构
 
-- **前端显示**：仍使用 localStorage 显示个人使用统计（仅当前浏览器）
-- **服务器统计**：通过 Google Analytics 记录所有用户的使用情况
-- **事件类型**：
-  - `extract_frames` - 提取帧操作
-  - `process_cutout` - 抠图处理操作
-  - `generate_spritesheet` - 生成 Spritesheet 操作
+```
+aispritesheetanimation/
+├── index.html          # 主页面，包含 HTML 结构和 Firebase 配置
+├── script.js           # 核心业务逻辑（视频处理、图像处理、Spritesheet 生成）
+├── style.css           # 样式文件
+├── jszip.min.js        # JSZip 库（用于打包下载处理后的帧）
+├── icon.png            # 项目图标
+├── build.js            # 构建脚本（复制文件到 dist 目录）
+├── package.json        # 项目配置
+├── CNAME               # GitHub Pages 自定义域名配置
+└── dist/               # 构建输出目录
+```
 
-## 部署说明
+## 🛠️ 技术栈
+
+- **前端框架**：纯原生 JavaScript（ES6+）
+- **图像处理**：Canvas API
+- **视频处理**：HTML5 Video API + Canvas
+- **实时数据库**：Firebase Realtime Database
+- **数据分析**：Google Analytics
+- **文件压缩**：JSZip
+- **构建工具**：Node.js
+
+## 📦 核心模块
+
+### 1. 视频帧提取模块 (`script.js`)
+- `extractFrames()` - 从视频中提取帧
+- `addFrameToGrid()` - 将帧添加到网格显示
+- 使用 `requestVideoFrameCallback` API 优化性能
+
+### 2. 图像处理模块 (`script.js`)
+- `processCutout()` - 处理抠图
+- `removeWatermarkFromCanvas()` - 移除水印
+- `removeBackgroundFromCanvas()` - 移除背景
+- `getBorderColorMode()` - 检测边缘颜色（用于背景移除）
+
+### 3. Spritesheet 生成模块 (`script.js`)
+- `generateSpritesheet()` - 生成 Spritesheet
+- 自动计算最优行列布局
+- 支持自定义间距
+
+### 4. 实时统计模块 (`index.html`)
+- Firebase Realtime Database 集成
+- 实时数据同步和显示
+- localStorage 回退机制
+
+## 🚀 快速开始
+
+### 环境要求
+- Node.js 18+（用于构建）
+- 现代浏览器（支持 ES6+、Canvas API、Video API）
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 本地开发
+
+直接打开 `index.html` 文件即可，无需构建。
 
 ### 构建项目
 
 ```bash
-npm install
 npm run build
 ```
 
 构建完成后，所有文件会输出到 `dist` 目录。
 
-### 部署配置
+## ⚙️ 配置说明
 
-根据部署平台要求，配置如下：
+### Firebase 配置
 
-- **项目预设框架**: React（虽然本项目是纯静态项目，但构建流程兼容）
-- **Node.js 版本**: Node.js 18
-- **目标目录**: 默认为根目录（留空）
-- **安装命令**: `npm install`
-- **构建命令**: `npm run build`
-- **部署命令**: `tcb hosting deploy ./dist /Video2Spritesheet`
+项目已集成 Firebase Realtime Database 用于实时统计。配置位于 `index.html` 第 24-33 行：
 
-> 注意：`./dist` 是构建输出目录，`/Video2Spritesheet` 是应用部署目录。多应用部署到根目录可能存在文件覆盖情况，建议区分应用目录部署。
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.nie.netease.com/caikang/aispritesheetanimation.git
-git branch -M master
-git push -uf origin master
+```javascript
+const firebaseConfig = {
+    apiKey: "your-api-key",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "your-messaging-sender-id",
+    appId: "your-app-id",
+    measurementId: "your-measurement-id"
+};
 ```
 
-## Integrate with your tools
+**重要**：
+1. 需要在 Firebase Console 中启用 Realtime Database
+2. 配置数据库安全规则允许读写 `stats` 路径：
+   ```json
+   {
+     "rules": {
+       "stats": {
+         ".read": true,
+         ".write": true
+       }
+     }
+   }
+   ```
 
-- [ ] [Set up project integrations](https://gitlab.nie.netease.com/caikang/aispritesheetanimation/-/settings/integrations)
+### Google Analytics 配置
 
-## Collaborate with your team
+Google Analytics 配置位于 `index.html` 第 10-16 行：
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```javascript
+gtag('config', 'G-HHMQ09PZQJ');
+```
 
-## Test and Deploy
+替换为你的 Google Analytics 测量 ID。
 
-Use the built-in continuous integration in GitLab.
+## 📊 数据统计
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Firebase 数据结构
 
-***
+```
+stats/
+  ├── total: 总访问次数
+  └── daily/
+      ├── 2024-01-15: 今日访问次数
+      ├── 2024-01-16: 今日访问次数
+      └── ...
+```
 
-# Editing this README
+### Google Analytics 事件
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- `extract_frames` - 提取帧操作
+- `process_cutout` - 抠图处理操作
+- `generate_spritesheet` - 生成 Spritesheet 操作
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## 🚢 部署
 
-## Name
-Choose a self-explaining name for your project.
+### 部署到静态托管
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+1. 构建项目：`npm run build`
+2. 将 `dist` 目录中的文件上传到静态托管服务
+3. 确保服务器支持单页应用（SPA）路由
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### 部署配置示例
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **目标目录**：`dist`
+- **构建命令**：`npm run build`
+- **Node.js 版本**：18+
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## 🎯 使用流程
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+1. **上传视频** - 点击或拖拽上传视频文件
+2. **提取帧** - 设置帧率，点击"提取帧"按钮
+3. **选择帧** - 在网格中选择需要的帧（支持全选/取消全选）
+4. **预览帧** - 使用预览工具查看选中的帧序列
+5. **抠图处理** - 配置处理选项（移除水印、移除背景、调整分辨率）
+6. **生成 Spritesheet** - 点击"生成 Spritesheet"按钮
+7. **下载** - 下载处理后的帧或 Spritesheet
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## 🔧 开发说明
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 核心全局变量
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```javascript
+let videoFile = null;              // 视频文件对象
+let videoElement = null;           // 视频 DOM 元素
+let extractedFrames = [];         // 提取的帧数组
+let selectedFrames = [];           // 选中的帧索引数组
+let processedFrames = [];         // 处理后的帧数组
+let generatedSpritesheet = null;   // 生成的 Spritesheet 对象
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### 关键函数
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+- `loadVideo(file)` - 加载视频文件
+- `extractFrames()` - 提取视频帧
+- `processCutout()` - 处理抠图
+- `generateSpritesheet()` - 生成 Spritesheet
+- `updateUsageStats(action)` - 更新使用统计
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### 进度指示器
 
-## License
-For open source projects, say how it is licensed.
+项目包含 5 步进度指示器：
+1. 上传视频
+2. 提取帧
+3. 选择帧
+4. 抠图处理
+5. 生成 Spritesheet
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 📝 注意事项
+
+1. **浏览器兼容性**：需要支持 ES6+、Canvas API、Video API
+2. **性能优化**：大视频文件处理可能需要较长时间
+3. **内存使用**：提取的帧会存储在内存中，大视频可能占用较多内存
+4. **Firebase 配额**：注意 Firebase 免费套餐的限制
+
+## 📄 许可证
+
+MIT License
+
+## 👥 作者
+
+大话AI组 - 游逻辑工作室
+
+## 🔗 相关链接
+
+- [Bilibili 主页](https://space.bilibili.com/2378399)
