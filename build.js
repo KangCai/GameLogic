@@ -4,6 +4,7 @@ const path = require('path');
 // 需要复制的文件列表
 const filesToCopy = [
   'index.html',
+  'images2spritesheet.html',
   'style.css',
   'script.js',
   'jszip.min.js',

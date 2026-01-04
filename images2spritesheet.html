@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片转精灵图工具 - 序列帧动画制作工具</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script>
+        (function() {
+            const gaStartTime = performance.now();
+            const gaScript = document.createElement('script');
+            gaScript.async = true;
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-HHMQ09PZQJ';
+            gaScript.onload = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.log(`📊 Google Analytics 加载时间: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            gaScript.onerror = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.error(`❌ Google Analytics 加载失败，耗时: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            document.head.appendChild(gaScript);
+            
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HHMQ09PZQJ');
+        })();
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        (async function() {
+            const firebaseStartTime = performance.now();
+            
+            try {
+                // 加载 Firebase App 模块
+                const firebaseAppStartTime = performance.now();
+                const appModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const firebaseAppLoadTime = performance.now() - firebaseAppStartTime;
+                console.log(`🔥 Firebase App 模块加载时间: ${firebaseAppLoadTime.toFixed(2)}ms`);
+                
+                // 加载 Firebase Database 模块
+                const firebaseDbStartTime = performance.now();
+                const dbModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+                const firebaseDbLoadTime = performance.now() - firebaseDbStartTime;
+                const firebaseTotalTime = performance.now() - firebaseStartTime;
+                console.log(`🔥 Firebase Database 模块加载时间: ${firebaseDbLoadTime.toFixed(2)}ms`);
+                console.log(`🔥 Firebase 总加载时间: ${firebaseTotalTime.toFixed(2)}ms`);
+                
+                // 导入 Firebase 函数
+                const { initializeApp } = appModule;
+                const { getDatabase, ref, set, get, onValue, increment, serverTimestamp } = dbModule;
+                
+                // Firebase 配置
+                const firebaseConfig = {
+                    apiKey: "AIzaSyALomh38paxBLYGWPdwrW3aEre7VrAdf9M",
+                    authDomain: "gamelogic-sin.firebaseapp.com",
+                    databaseURL: "https://gamelogic-sin-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "gamelogic-sin",
+                    storageBucket: "gamelogic-sin.firebasestorage.app",
+                    messagingSenderId: "236531765720",
+                    appId: "1:236531765720:web:9c7d8fe1c8f6d1723be2ad",
+                    measurementId: "G-YQFPYHJTRM"
+                };
+                
+                // 实时统计功能
+                (function() {
+                    let database = null;
+                    let isFirebaseEnabled = false;
+                    
+                    function getTodayDate() {
+                        const now = new Date();
+                        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    }
+                    
+                    // 初始化 Firebase
+                    function initFirebase() {
+                        try {
+                            const app = initializeApp(firebaseConfig);
+                            database = getDatabase(app);
+                            isFirebaseEnabled = true;
+                            
+                            console.log('Firebase 初始化成功');
+                            return true;
+                        } catch (error) {
+                            console.error('Firebase 初始化失败:', error);
+                            return false;
+                        }
+                    }
+                    
+                    // 使用 Firebase 更新统计
+                    async function updateStatsWithFirebase() {
+                        if (!database || !isFirebaseEnabled) return false;
+                        
+                        const dataRequestStartTime = performance.now();
+                        const today = getTodayDate();
+                        const todayRef = ref(database, `stats/spritesheet/daily/${today}`);
+                        const totalRef = ref(database, 'stats/spritesheet/total');
+                        
+                        try {
+                            // 获取今日使用次数
+                            const getTodayStartTime = performance.now();
+                            const todaySnapshot = await get(todayRef);
+                            const getTodayTime = performance.now() - getTodayStartTime;
+                            const currentToday = todaySnapshot.exists() ? todaySnapshot.val() : 0;
+                            console.log(`📊 获取今日使用次数请求时间: ${getTodayTime.toFixed(2)}ms (值: ${currentToday})`);
+                            
+                            // 更新今日使用次数
+                            const setTodayStartTime = performance.now();
+                            await set(todayRef, currentToday + 1);
+                            const setTodayTime = performance.now() - setTodayStartTime;
+                            console.log(`📊 更新今日使用次数请求时间: ${setTodayTime.toFixed(2)}ms`);
+                            
+                            // 获取总使用次数
+                            const getTotalStartTime = performance.now();
+                            const totalSnapshot = await get(totalRef);
+                            const getTotalTime = performance.now() - getTotalStartTime;
+                            const currentTotal = totalSnapshot.exists() ? totalSnapshot.val() : 0;
+                            console.log(`📊 获取总使用次数请求时间: ${getTotalTime.toFixed(2)}ms (值: ${currentTotal})`);
+                            
+                            // 更新总使用次数
+                            const setTotalStartTime = performance.now();
+                            await set(totalRef, currentTotal + 1);
+                            const setTotalTime = performance.now() - setTotalStartTime;
+                            console.log(`📊 更新总使用次数请求时间: ${setTotalTime.toFixed(2)}ms`);
+                            
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.log(`📊 Firebase 数据请求总耗时: ${dataRequestTotalTime.toFixed(2)}ms`);
+                            
+                            // 监听实时更新
+                            let statsShown = false;
+                            
+                            onValue(todayRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const todayCountEl = document.getElementById('todayCount');
+                                if (todayCountEl) {
+                                    todayCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            onValue(totalRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const totalCountEl = document.getElementById('totalCount');
+                                if (totalCountEl) {
+                                    totalCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            return true;
+                        } catch (error) {
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.error(`❌ 更新 Firebase 统计数据失败，耗时: ${dataRequestTotalTime.toFixed(2)}ms`, error);
+                            return false;
+                        }
+                    }
+                    
+                    // 主函数：更新统计
+                    async function updatePageViewStats() {
+                        // 尝试初始化 Firebase
+                        const firebaseInitialized = initFirebase();
+                        
+                        if (firebaseInitialized) {
+                            // 使用 Firebase
+                            await updateStatsWithFirebase();
+                        }
+                        // 如果 Firebase 初始化失败，不显示任何数据（保持为空）
+                    }
+                    
+                    // 页面加载时立即执行
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updatePageViewStats);
+                    } else {
+                        updatePageViewStats();
+                    }
+                })();
+            } catch (error) {
+                const firebaseLoadTime = performance.now() - firebaseStartTime;
+                console.error(`❌ Firebase 加载失败，耗时: ${firebaseLoadTime.toFixed(2)}ms`, error);
+            }
+        })();
+    </script>
+    
+    <style>
+        .spritesheet-tool-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .spritesheet-tool-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .input-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .input-group input[type="file"]:hover {
+            border-color: var(--primary-color);
+            background: #f0f4ff;
+        }
+        
+        .input-group select,
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: var(--text-primary);
+        }
+        
+        .input-group select:focus,
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .input-group small {
+            display: block;
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .custom-resolution {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .custom-resolution input {
+            flex: 1;
+        }
+        
+        #result {
+            margin-top: 30px;
+            padding: 25px;
+            background: var(--bg-color);
+            border-radius: var(--radius-lg);
+            display: none;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        #result p {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        #result p:last-of-type {
+            margin-bottom: 20px;
+        }
+        
+        #previewImg {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin: 15px 0;
+            background: white;
+            padding: 10px;
+        }
+        
+        .info-card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .info-card p {
+            margin: 8px 0;
+            color: var(--text-primary);
+        }
+        
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
+        
+        .info-value {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #downloadBtn {
+            background: var(--success-color);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        #downloadBtn:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+        
+        @media (max-width: 768px) {
+            .spritesheet-tool-container {
+                padding: 25px;
+            }
+            
+            .spritesheet-tool-container h2 {
+                font-size: 1.5rem;
+            }
+            
+            .custom-resolution {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页头 -->
+        <header class="header">
+            <h1>图片转精灵图工具</h1>
+            <p class="subtitle">将图片文件夹转换为精灵图（Spritesheet）</p>
+            <div class="studio-meta">
+                <div class="studio-brand">
+                    <img src="icon.png" alt="游逻辑工作室 logo" class="studio-logo">
+                    <span class="studio-tagline">游逻辑工作室</span>
+                </div>
+                <div class="studio-social">
+                    <a class="social-link" href="index.html" style="margin-right: 8px;">
+                        <span>🎬 视频转序列帧</span>
+                    </a>
+                    <span class="social-label">❤️求个关注：</span>
+                    <a class="social-link" id="bilibiliLink" href="https://space.bilibili.com/2378399" target="_blank" rel="noopener noreferrer">
+                        <span class="social-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 4h20v12H7l-5 4V4z"></path>
+                            </svg>
+                        </span>
+                        <span>Bilibili</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- 工具区域 -->
+        <div class="spritesheet-tool-container">
+            <h2>图片转精灵图工具</h2>
+            <div class="input-group">
+                <label>选择图片文件夹：</label>
+                <input type="file" id="folderInput" webkitdirectory directory>
+            </div>
+            <div class="input-group">
+                <label>裁剪周边轮廓（百分比）：</label>
+                <input type="number" id="cropPercent" value="0" min="0" max="50" step="0.1" placeholder="0">
+                <small>将裁掉图片周边指定百分比，默认 0%（例如：5% 会裁掉每边 5%，保留中间 90% 区域）</small>
+            </div>
+            <div class="input-group">
+                <label>选择单图分辨率：</label>
+                <select id="resolution">
+                    <option value="256,256">256 × 256</option>
+                    <option value="512,512">512 × 512</option>
+                    <option value="custom">自定义分辨率</option>
+                </select>
+                <div class="custom-resolution" id="customResolution" style="display:none;">
+                    <input type="text" id="customWidth" placeholder="宽度 (px)" pattern="[0-9]*">
+                    <input type="text" id="customHeight" placeholder="高度 (px)" pattern="[0-9]*">
+                </div>
+            </div>
+
+            <button id="generateBtn" class="btn btn-primary">✨ 生成精灵图</button>
+            <div id="result"></div>
+        </div>
+        
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="usage-stats" id="usageStats" style="display: none;">
+                <span class="stat-item">今日使用：<span id="todayCount">0</span> 次</span>
+                <span class="stat-separator">|</span>
+                <span class="stat-item">总使用：<span id="totalCount">0</span> 次</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let targetWidth, targetHeight;
+        
+        // 生成精灵图信息
+        function generateSpritesheet() {
+            const folderInput = document.getElementById('folderInput');
+            if (!folderInput.files || folderInput.files.length === 0) {
+                alert('请先选择图片文件夹');
+                return;
+            }
+            // 获取目标分辨率
+            const resolutionValue = document.getElementById('resolution').value;
+            if (resolutionValue === 'custom') {
+                const width = parseInt(document.getElementById('customWidth').value);
+                const height = parseInt(document.getElementById('customHeight').value);
+                if (isNaN(width) || isNaN(height) || width <=0 || height <=0) {
+                    alert('请输入有效的自定义分辨率');
+                    return;
+                }
+                targetWidth = width;
+                targetHeight = height;
+            } else {
+                [targetWidth, targetHeight] = resolutionValue.split(',').map(Number);
+            }
+            // 获取裁剪百分比
+            const cropPercent = parseFloat(document.getElementById('cropPercent').value) || 0;
+            if (cropPercent < 0 || cropPercent > 50) {
+                alert('裁剪百分比必须在 0-50 之间');
+                return;
+            }
+            
+            // 获取图片数量
+            const imageCount = folderInput.files.length;
+            if (imageCount === 0) {
+                alert('文件夹中未找到图片文件');
+                return;
+            }
+            // 计算最接近正方形的行列数
+            const [cols, rows] = calculateGrid(imageCount);
+            const totalWidth = cols * targetWidth;
+            const totalHeight = rows * targetHeight;
+            // 显示结果和加载状态
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="info-card">
+                    <p><span class="info-label">图片数量：</span><span class="info-value">${imageCount} 张</span></p>
+                    <p><span class="info-label">排列方式：</span><span class="info-value">${cols} 列 × ${rows} 行</span></p>
+                    <p><span class="info-label">最终分辨率：</span><span class="info-value">${totalWidth}px × ${totalHeight}px</span></p>
+                </div>
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在生成精灵图，请稍候...</p>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+
+            // 创建Canvas并绘制精灵图
+            const canvas = document.createElement('canvas');
+            canvas.width = totalWidth;
+            canvas.height = totalHeight;
+            const ctx = canvas.getContext('2d');
+            let loadedCount = 0;
+
+            // 加载所有图片并绘制
+            Array.from(folderInput.files).forEach((file, index) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                img.onload = () => {
+                    // 先裁剪图片
+                    const cropRatio = 1 - (cropPercent / 100) * 2; // 例如5%会保留90%
+                    const cropX = (img.width * cropPercent) / 100;
+                    const cropY = (img.height * cropPercent) / 100;
+                    const cropWidth = img.width * cropRatio;
+                    const cropHeight = img.height * cropRatio;
+                    
+                    // 创建临时canvas进行裁剪
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = cropWidth;
+                    tempCanvas.height = cropHeight;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // 绘制裁剪后的图片到临时canvas
+                    tempCtx.drawImage(
+                        img,
+                        cropX, cropY, cropWidth, cropHeight,  // 源图片裁剪区域
+                        0, 0, cropWidth, cropHeight            // 目标canvas位置
+                    );
+                    
+                    // 将裁剪后的图片缩放到目标尺寸并绘制到最终canvas
+                    const col = index % cols;
+                    const row = Math.floor(index / cols);
+                    ctx.drawImage(tempCanvas, col * targetWidth, row * targetHeight, targetWidth, targetHeight);
+                    
+                    // 清理临时对象
+                    URL.revokeObjectURL(img.src);
+                    
+                    loadedCount++;
+                    if (loadedCount === imageCount) {
+                        // 生成图片并触发下载
+                        canvas.toBlob(blob => {
+                            const url = URL.createObjectURL(blob);
+                            const resultDiv = document.getElementById('result');
+                            const infoCard = resultDiv.querySelector('.info-card');
+                            const loadingDiv = resultDiv.querySelector('.loading');
+                            
+                            // 移除加载状态，添加预览图和下载按钮
+                            loadingDiv.outerHTML = `
+                                <img id="previewImg" src="${url}" alt="精灵图预览">
+                                <button id="downloadBtn" class="btn btn-primary">📥 下载精灵图</button>
+                            `;
+                            
+                            const downloadBtn = document.getElementById('downloadBtn');
+                            downloadBtn.onclick = () => {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'spritesheet.png';
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            };
+                        });
+                    }
+                };
+            });
+        }
+    
+        // 计算最接近正方形的行列数
+        function calculateGrid(count) {
+            let cols = Math.ceil(Math.sqrt(count));
+            let rows = Math.ceil(count / cols);
+            // 调整行列使更接近正方形
+            while (true) {
+                const nextCols = cols - 1;
+                if (nextCols < 1) break;
+                const nextRows = Math.ceil(count / nextCols);
+                if (Math.abs(nextCols - nextRows) < Math.abs(cols - rows)) {
+                    cols = nextCols;
+                    rows = nextRows;
+                } else {
+                    break;
+                }
+            }
+            return [cols, rows];
+        }
+        
+        // 等待 DOM 加载完成后绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 处理分辨率选择
+            document.getElementById('resolution').addEventListener('change', function(e) {
+                const customResolution = document.getElementById('customResolution');
+                customResolution.style.display = e.target.value === 'custom' ? 'flex' : 'none';
+            });
+            // 绑定生成按钮事件
+            document.getElementById('generateBtn').addEventListener('click', generateSpritesheet);
+        });
+    </script>
+</body>
+</html>
