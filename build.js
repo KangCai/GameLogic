@@ -5,6 +5,7 @@ const path = require('path');
 const filesToCopy = [
   'index.html',
   'images2spritesheet.html',
+  'image-processor.html',
   'style.css',
   'script.js',
   'jszip.min.js',

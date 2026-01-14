@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像处理工具集 - 序列帧动画制作工具</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics -->
+    <script>
+        (function() {
+            const gaStartTime = performance.now();
+            const gaScript = document.createElement('script');
+            gaScript.async = true;
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-HHMQ09PZQJ';
+            gaScript.onload = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.log(`📊 Google Analytics 加载时间: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            gaScript.onerror = function() {
+                const gaLoadTime = performance.now() - gaStartTime;
+                console.error(`❌ Google Analytics 加载失败，耗时: ${gaLoadTime.toFixed(2)}ms`);
+            };
+            document.head.appendChild(gaScript);
+            
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HHMQ09PZQJ');
+        })();
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        (async function() {
+            const firebaseStartTime = performance.now();
+            
+            try {
+                // 加载 Firebase App 模块
+                const firebaseAppStartTime = performance.now();
+                const appModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const firebaseAppLoadTime = performance.now() - firebaseAppStartTime;
+                console.log(`🔥 Firebase App 模块加载时间: ${firebaseAppLoadTime.toFixed(2)}ms`);
+                
+                // 加载 Firebase Database 模块
+                const firebaseDbStartTime = performance.now();
+                const dbModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+                const firebaseDbLoadTime = performance.now() - firebaseDbStartTime;
+                const firebaseTotalTime = performance.now() - firebaseStartTime;
+                console.log(`🔥 Firebase Database 模块加载时间: ${firebaseDbLoadTime.toFixed(2)}ms`);
+                console.log(`🔥 Firebase 总加载时间: ${firebaseTotalTime.toFixed(2)}ms`);
+                
+                // 导入 Firebase 函数
+                const { initializeApp } = appModule;
+                const { getDatabase, ref, set, get, onValue, increment, serverTimestamp } = dbModule;
+                
+                // Firebase 配置
+                const firebaseConfig = {
+                    apiKey: "AIzaSyALomh38paxBLYGWPdwrW3aEre7VrAdf9M",
+                    authDomain: "gamelogic-sin.firebaseapp.com",
+                    databaseURL: "https://gamelogic-sin-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "gamelogic-sin",
+                    storageBucket: "gamelogic-sin.firebasestorage.app",
+                    messagingSenderId: "236531765720",
+                    appId: "1:236531765720:web:9c7d8fe1c8f6d1723be2ad",
+                    measurementId: "G-YQFPYHJTRM"
+                };
+                
+                // 实时统计功能
+                (function() {
+                    let database = null;
+                    let isFirebaseEnabled = false;
+                    
+                    function getTodayDate() {
+                        const now = new Date();
+                        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    }
+                    
+                    // 初始化 Firebase
+                    function initFirebase() {
+                        try {
+                            const app = initializeApp(firebaseConfig);
+                            database = getDatabase(app);
+                            isFirebaseEnabled = true;
+                            
+                            console.log('Firebase 初始化成功');
+                            return true;
+                        } catch (error) {
+                            console.error('Firebase 初始化失败:', error);
+                            return false;
+                        }
+                    }
+                    
+                    // 使用 Firebase 更新统计
+                    async function updateStatsWithFirebase() {
+                        if (!database || !isFirebaseEnabled) return false;
+                        
+                        const dataRequestStartTime = performance.now();
+                        const today = getTodayDate();
+                        const todayRef = ref(database, `stats/imageprocessor/daily/${today}`);
+                        const totalRef = ref(database, 'stats/imageprocessor/total');
+                        
+                        try {
+                            // 获取今日使用次数
+                            const getTodayStartTime = performance.now();
+                            const todaySnapshot = await get(todayRef);
+                            const getTodayTime = performance.now() - getTodayStartTime;
+                            const currentToday = todaySnapshot.exists() ? todaySnapshot.val() : 0;
+                            console.log(`📊 获取今日使用次数请求时间: ${getTodayTime.toFixed(2)}ms (值: ${currentToday})`);
+                            
+                            // 更新今日使用次数
+                            const setTodayStartTime = performance.now();
+                            await set(todayRef, currentToday + 1);
+                            const setTodayTime = performance.now() - setTodayStartTime;
+                            console.log(`📊 更新今日使用次数请求时间: ${setTodayTime.toFixed(2)}ms`);
+                            
+                            // 获取总使用次数
+                            const getTotalStartTime = performance.now();
+                            const totalSnapshot = await get(totalRef);
+                            const getTotalTime = performance.now() - getTotalStartTime;
+                            const currentTotal = totalSnapshot.exists() ? totalSnapshot.val() : 0;
+                            console.log(`📊 获取总使用次数请求时间: ${getTotalTime.toFixed(2)}ms (值: ${currentTotal})`);
+                            
+                            // 更新总使用次数
+                            const setTotalStartTime = performance.now();
+                            await set(totalRef, currentTotal + 1);
+                            const setTotalTime = performance.now() - setTotalStartTime;
+                            console.log(`📊 更新总使用次数请求时间: ${setTotalTime.toFixed(2)}ms`);
+                            
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.log(`📊 Firebase 数据请求总耗时: ${dataRequestTotalTime.toFixed(2)}ms`);
+                            
+                            // 监听实时更新
+                            let statsShown = false;
+                            
+                            onValue(todayRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const todayCountEl = document.getElementById('todayCount');
+                                if (todayCountEl) {
+                                    todayCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            onValue(totalRef, (snapshot) => {
+                                const count = snapshot.val() || 0;
+                                const totalCountEl = document.getElementById('totalCount');
+                                if (totalCountEl) {
+                                    totalCountEl.textContent = count;
+                                }
+                                
+                                // 显示统计区域（第一次数据返回时）
+                                if (!statsShown) {
+                                    const usageStatsEl = document.getElementById('usageStats');
+                                    if (usageStatsEl) {
+                                        usageStatsEl.style.display = 'flex';
+                                        statsShown = true;
+                                    }
+                                }
+                            });
+                            
+                            return true;
+                        } catch (error) {
+                            const dataRequestTotalTime = performance.now() - dataRequestStartTime;
+                            console.error(`❌ 更新 Firebase 统计数据失败，耗时: ${dataRequestTotalTime.toFixed(2)}ms`, error);
+                            return false;
+                        }
+                    }
+                    
+                    // 主函数：更新统计
+                    async function updatePageViewStats() {
+                        // 尝试初始化 Firebase
+                        const firebaseInitialized = initFirebase();
+                        
+                        if (firebaseInitialized) {
+                            // 使用 Firebase
+                            await updateStatsWithFirebase();
+                        }
+                        // 如果 Firebase 初始化失败，不显示任何数据（保持为空）
+                    }
+                    
+                    // 页面加载时立即执行
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updatePageViewStats);
+                    } else {
+                        updatePageViewStats();
+                    }
+                })();
+            } catch (error) {
+                const firebaseLoadTime = performance.now() - firebaseStartTime;
+                console.error(`❌ Firebase 加载失败，耗时: ${firebaseLoadTime.toFixed(2)}ms`, error);
+            }
+        })();
+    </script>
+    
+    <style>
+        .image-processor-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .image-processor-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .input-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .input-group input[type="file"]:hover {
+            border-color: var(--primary-color);
+            background: #f0f4ff;
+        }
+        
+        .input-group small {
+            display: block;
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-color);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .file-list-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        
+        .file-list-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+        
+        .processing-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-color);
+            border-radius: var(--radius);
+            display: none;
+        }
+        
+        .processing-status.active {
+            display: block;
+        }
+        
+        .processing-progress {
+            margin-top: 10px;
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .processing-progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .results-section.active {
+            display: block;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .results-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .result-item {
+            background: var(--bg-color);
+            border-radius: var(--radius);
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .result-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .result-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        
+        .result-item-download {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .result-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-box {
+            position: relative;
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .preview-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .preview-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-conic-gradient(#f3f4f6 0% 25%, transparent 0% 50%) 
+                50% / 20px 20px;
+            z-index: 0;
+        }
+        
+        .preview-box img {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .batch-download-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            border: 2px dashed var(--border-color);
+        }
+        
+        .batch-download-section.active {
+            border-color: var(--primary-color);
+            background: #f0f4ff;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+        
+        @media (max-width: 768px) {
+            .image-processor-container {
+                padding: 25px;
+            }
+            
+            .image-processor-container h2 {
+                font-size: 1.5rem;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-preview {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页头 -->
+        <header class="header">
+            <h1>图像处理工具集</h1>
+            <p class="subtitle">PNG透明背景填充工具 - 将透明部分填充为白色，输出JPEG格式</p>
+            <div class="studio-meta">
+                <div class="studio-brand">
+                    <img src="icon.png" alt="游逻辑工作室 logo" class="studio-logo">
+                    <span class="studio-tagline">游逻辑工作室</span>
+                </div>
+                <div class="studio-social">
+                    <a class="social-link" href="index.html" style="margin-right: 8px;">
+                        <span>🎬 视频转序列帧</span>
+                    </a>
+                    <a class="social-link" href="images2spritesheet.html" style="margin-right: 8px;">
+                        <span>📦 图片转精灵图</span>
+                    </a>
+                    <span class="social-label">❤️求个关注：</span>
+                    <a class="social-link" id="bilibiliLink" href="https://space.bilibili.com/2378399" target="_blank" rel="noopener noreferrer">
+                        <span class="social-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 4h20v12H7l-5 4V4z"></path>
+                            </svg>
+                        </span>
+                        <span>Bilibili</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- 工具区域 -->
+        <div class="image-processor-container">
+            <h2>PNG透明背景填充工具</h2>
+            <div class="input-group">
+                <label>选择PNG图片文件（支持批量选择）：</label>
+                <input type="file" id="imageInput" accept="image/png" multiple>
+                <small>支持同时选择多个PNG图片文件，工具会将所有透明部分填充为白色，并输出为JPEG格式</small>
+            </div>
+            
+            <div class="file-list" id="fileList" style="display: none;">
+                <div id="fileListContent"></div>
+            </div>
+            
+            <button id="processBtn" class="btn btn-primary" style="display: none; width: 100%; margin-top: 20px;">✨ 开始处理</button>
+            
+            <div class="processing-status" id="processingStatus">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p id="processingText">正在处理图片...</p>
+                </div>
+                <div class="processing-progress">
+                    <div class="processing-progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h3>处理结果</h3>
+                    <button id="batchDownloadBtn" class="btn btn-success">📥 一键批量下载所有图片</button>
+                </div>
+                <div class="results-grid" id="resultsGrid"></div>
+            </div>
+        </div>
+        
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="usage-stats" id="usageStats" style="display: none;">
+                <span class="stat-item">今日使用：<span id="todayCount">0</span> 次</span>
+                <span class="stat-separator">|</span>
+                <span class="stat-item">总使用：<span id="totalCount">0</span> 次</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const fileList = document.getElementById('fileList');
+        const fileListContent = document.getElementById('fileListContent');
+        const processBtn = document.getElementById('processBtn');
+        const processingStatus = document.getElementById('processingStatus');
+        const processingText = document.getElementById('processingText');
+        const progressBar = document.getElementById('progressBar');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const batchDownloadBtn = document.getElementById('batchDownloadBtn');
+        
+        let selectedFiles = [];
+        let processedImages = [];
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // 更新文件列表显示
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.style.display = 'none';
+                processBtn.style.display = 'none';
+                return;
+            }
+            
+            fileList.style.display = 'block';
+            processBtn.style.display = 'block';
+            
+            fileListContent.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-list-item">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+            `).join('');
+        }
+        
+        // 处理单个图片：将透明部分填充为白色
+        function processImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        // 创建canvas
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 先填充白色背景
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // 绘制原图（透明部分会显示为白色）
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // 转换为JPEG格式，使用高质量
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                // 验证JPEG文件头是否正确（FF D8 FF 开头，FF D9 结尾）
+                                const reader = new FileReader();
+                                reader.onloadend = function() {
+                                    const arrayBuffer = reader.result;
+                                    const uint8Array = new Uint8Array(arrayBuffer);
+                                    
+                                    // 检查JPEG文件头：必须以 FF D8 FF 开头
+                                    const jpegStart = [0xFF, 0xD8, 0xFF];
+                                    const isValidStart = jpegStart.every((byte, index) => uint8Array[index] === byte);
+                                    
+                                    // 检查JPEG文件尾：必须以 FF D9 结尾
+                                    const jpegEnd = [0xFF, 0xD9];
+                                    const isValidEnd = jpegEnd.every((byte, index) => 
+                                        uint8Array[uint8Array.length - jpegEnd.length + index] === byte
+                                    );
+                                    
+                                    if (isValidStart && isValidEnd) {
+                                        // 文件头正确，创建新的 Blob 确保格式正确
+                                        const validBlob = new Blob([arrayBuffer], { type: 'image/jpeg' });
+                                        resolve({
+                                            originalFile: file,
+                                            processedBlob: validBlob,
+                                            processedUrl: URL.createObjectURL(validBlob),
+                                            originalUrl: URL.createObjectURL(file)
+                                        });
+                                    } else {
+                                        reject(new Error('生成的JPEG文件格式不正确：文件头或文件尾验证失败'));
+                                    }
+                                };
+                                reader.onerror = function() {
+                                    reject(new Error('读取生成的图片数据失败'));
+                                };
+                                // 以二进制模式读取
+                                reader.readAsArrayBuffer(blob);
+                            } else {
+                                reject(new Error('无法生成处理后的图片'));
+                            }
+                        }, 'image/jpeg', 0.95); // 使用JPEG格式，质量95%
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('图片加载失败'));
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+        
+        // 处理所有图片
+        async function processAllImages() {
+            if (selectedFiles.length === 0) {
+                alert('请先选择图片文件');
+                return;
+            }
+            
+                // 隐藏结果区域，显示处理状态
+                resultsSection.classList.remove('active');
+                processingStatus.classList.add('active');
+                processBtn.disabled = true;
+                processedImages = [];
+            
+            const total = selectedFiles.length;
+            let processed = 0;
+            
+            try {
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    processingText.textContent = `正在处理: ${file.name} (${i + 1}/${total})`;
+                    
+                    try {
+                        const result = await processImage(file);
+                        processedImages.push(result);
+                        processed++;
+                        
+                        // 更新进度条
+                        const progress = (processed / total) * 100;
+                        progressBar.style.width = progress + '%';
+                    } catch (error) {
+                        console.error(`处理 ${file.name} 时出错:`, error);
+                        alert(`处理 ${file.name} 时出错: ${error.message}`);
+                    }
+                }
+                
+                // 处理完成，显示结果
+                displayResults();
+                processingStatus.classList.remove('active');
+                resultsSection.classList.add('active');
+            } catch (error) {
+                console.error('处理过程中出错:', error);
+                alert('处理过程中出错: ' + error.message);
+                processingStatus.classList.remove('active');
+            } finally {
+                processBtn.disabled = false;
+            }
+        }
+        
+        // 显示处理结果
+        function displayResults() {
+            resultsGrid.innerHTML = processedImages.map((item, index) => {
+                const fileName = item.originalFile.name;
+                const processedFileName = fileName.replace(/\.png$/i, '_filled.png') || fileName + '_filled.png';
+                
+                return `
+                    <div class="result-item">
+                        <div class="result-item-header">
+                            <span class="result-item-name" title="${fileName}">${fileName}</span>
+                            <button class="btn btn-secondary btn-sm result-item-download" data-index="${index}">
+                                📥 下载
+                            </button>
+                        </div>
+                        <div class="result-preview">
+                            <div class="preview-box">
+                                <img src="${item.originalUrl}" alt="原图">
+                                <span class="preview-label">原图</span>
+                            </div>
+                            <div class="preview-box">
+                                <img src="${item.processedUrl}" alt="处理后">
+                                <span class="preview-label">处理后</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 绑定单个下载按钮
+            resultsGrid.querySelectorAll('.result-item-download').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    downloadSingleImage(index);
+                });
+            });
+        }
+        
+        // 下载单个图片
+        function downloadSingleImage(index) {
+            const item = processedImages[index];
+            if (!item) return;
+            
+            const fileName = item.originalFile.name;
+            // 移除原扩展名，添加 _filled.jpg
+            const baseName = fileName.replace(/\.[^/.]+$/, '');
+            const processedFileName = baseName + '_filled.jpg';
+            
+            const a = document.createElement('a');
+            a.href = item.processedUrl;
+            a.download = processedFileName;
+            a.click();
+        }
+        
+        // 批量下载所有图片（逐个下载）
+        async function downloadAllImages() {
+            if (processedImages.length === 0) {
+                alert('没有可下载的图片');
+                return;
+            }
+            
+            try {
+                batchDownloadBtn.disabled = true;
+                batchDownloadBtn.textContent = '正在下载...';
+                
+                // 逐个下载所有图片，添加延迟避免浏览器阻止多个下载
+                for (let i = 0; i < processedImages.length; i++) {
+                    const item = processedImages[i];
+                    const fileName = item.originalFile.name;
+                    // 移除原扩展名，添加 _filled.jpg
+                    const baseName = fileName.replace(/\.[^/.]+$/, '');
+                    const processedFileName = baseName + '_filled.jpg';
+                    
+                    // 创建下载链接
+                    const a = document.createElement('a');
+                    a.href = item.processedUrl;
+                    a.download = processedFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // 更新按钮文本显示进度
+                    batchDownloadBtn.textContent = `正在下载... (${i + 1}/${processedImages.length})`;
+                    
+                    // 添加延迟，避免浏览器阻止多个下载
+                    if (i < processedImages.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                }
+                
+                batchDownloadBtn.textContent = '📥 一键批量下载所有图片';
+                alert(`成功下载 ${processedImages.length} 张图片！`);
+            } catch (error) {
+                console.error('批量下载失败:', error);
+                alert('批量下载失败: ' + error.message);
+            } finally {
+                batchDownloadBtn.disabled = false;
+            }
+        }
+        
+        // 文件选择事件
+        imageInput.addEventListener('change', function(e) {
+            selectedFiles = Array.from(e.target.files).filter(file => {
+                // 只处理PNG文件
+                return file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+            });
+            
+            if (selectedFiles.length === 0 && e.target.files.length > 0) {
+                alert('请选择PNG格式的图片文件');
+                imageInput.value = '';
+                return;
+            }
+            
+            updateFileList();
+            
+            // 重置状态
+            resultsSection.classList.remove('active');
+            batchDownloadSection.classList.remove('active');
+            processedImages = [];
+        });
+        
+        // 处理按钮事件
+        processBtn.addEventListener('click', processAllImages);
+        
+        // 批量下载按钮事件
+        batchDownloadBtn.addEventListener('click', downloadAllImages);
+    </script>
+</body>
+</html>
+
